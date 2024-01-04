@@ -243,8 +243,15 @@ func robotNodeAddresses(addressFamily config.AddressFamily, server *hrobotmodels
 	if addressFamily == config.AddressFamilyIPv4 || addressFamily == config.AddressFamilyDualStack {
 		addresses = append(
 			addresses,
-			corev1.NodeAddress{Type: corev1.NodeExternalIP, Address: server.ServerIP},
+			corev1.NodeAddress{Type: corev1.NodeInternalIP, Address: server.ServerIP},
 		)
+
+		if len(server.IP) > 1 {
+			addresses = append(
+				addresses,
+				corev1.NodeAddress{Type: corev1.NodeExternalIP, Address: server.IP[1]},
+			)
+		}
 	}
 
 	return addresses

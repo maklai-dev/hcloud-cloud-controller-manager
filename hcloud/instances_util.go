@@ -59,16 +59,41 @@ func getRobotServerByName(c robot.Client, node *corev1.Node) (server *hrobotmode
 		return nil, errMissingRobotClient
 	}
 
+	klog.Infof("getRobotServerByName(): name=%q", node.Name)
+
 	serverList, err := c.ServerGetList()
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
+	klog.Infof("getRobotServerByName(): serverList=%+v", serverList)
+
 	for i, s := range serverList {
-		if s.Name == node.Name {
+		sname_arr := strings.Split(s.Name, "/")
+
+		sname := sname_arr[0]
+		sip := ""
+
+		if len(sname_arr) > 1 {
+			sip = sname_arr[1]
+		}
+
+		if sname == node.Name {
 			server = &serverList[i]
+
+			// override server.IP array by value sip
+			server.Name = sname
+
+			if sip != "" {
+				server.IP = []string{sip, server.ServerIP}
+				server.ServerIP = sip
+			}
+
+			break
 		}
 	}
+
+	klog.Infof("getRobotServerByName(): server=%+v", server)
 
 	return server, nil
 }
@@ -80,6 +105,8 @@ func getRobotServerByID(c robot.Client, id int, node *corev1.Node) (*hrobotmodel
 		return nil, errMissingRobotClient
 	}
 
+	klog.Infof("getRobotServerByID(): id=%d", id)
+
 	server, err := c.ServerGet(id)
 	if err != nil && !hrobotmodels.IsError(err, hrobotmodels.ErrorCodeServerNotFound) {
 		return nil, fmt.Errorf("%s: %w", op, err)
@@ -89,10 +116,28 @@ func getRobotServerByID(c robot.Client, id int, node *corev1.Node) (*hrobotmodel
 		return nil, nil
 	}
 
+	sname_arr := strings.Split(server.Name, "/")
+
+	sname := sname_arr[0]
+	sip := ""
+
+	if len(sname_arr) > 1 {
+		sip = sname_arr[1]
+	}
+
+	server.Name = sname
+
+	if sip != "" {
+		server.IP = []string{sip, server.ServerIP}
+		server.ServerIP = sip
+	}
+
 	// check whether name matches - otherwise this server does not belong to the respective node anymore
 	if server.Name != node.Name {
 		return nil, nil
 	}
+
+	klog.Infof("getRobotServerByID(): server=%+v", server)
 
 	// return nil, nil if server could not be found
 	return server, nil
