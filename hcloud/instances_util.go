@@ -27,6 +27,7 @@ import (
 	"github.com/hetznercloud/hcloud-cloud-controller-manager/internal/metrics"
 	"github.com/hetznercloud/hcloud-cloud-controller-manager/internal/robot"
 	"github.com/hetznercloud/hcloud-go/v2/hcloud"
+	"k8s.io/klog/v2"
 )
 
 func getCloudServerByName(ctx context.Context, c *hcloud.Client, name string) (*hcloud.Server, error) {
