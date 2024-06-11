@@ -11,11 +11,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        k3s: [ v1.25, v1.26, v1.27, v1.28 ]
+        # All k3s after January 2024 break our e2e tests, we hardcode
+        # the versions for now until we can fix the source of this.
+        k3s: [ v1.26.12+k3s1, v1.27.9+k3s1, v1.28.5+k3s1, v1.29.0+k3s1 ]
       fail-fast: false
 
     env:
-      K3S_CHANNEL: ${{ matrix.k3s }}
+      K3S_VERSION: ${{ matrix.k3s }}
       SCOPE: gha-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.k3s }}
 
       # Domain must be available in the account running the tests. This domain is available in the account
@@ -23,23 +25,27 @@ jobs:
       CERT_DOMAIN: hc-integrations-test.de
 
     steps:
+      - uses: actions/checkout@v4
+
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.21"
-      - uses: actions/checkout@master
+          go-version-file: go.mod
+
+      - uses: hetznercloud/setup-hcloud@v1
+
       - uses: hetznercloud/tps-action@main
         with:
           token: ${{ secrets.HCLOUD_TOKEN  }}
-      - uses: 3bit/setup-hcloud@v2
-      - uses: yokawasa/action-setup-kube-tools@v0.9.3
+
+      - uses: yokawasa/action-setup-kube-tools@v0.11.1
         with:
           setup-tools: |
             helm
             kubectl
             skaffold
-          helm: v3.11.2
-          kubectl: v1.28.1
-          skaffold: v2.3.0
+          helm: v3.15.1
+          kubectl: v1.29.0
+          skaffold: v2.12.0
       - name: Install k3sup
         run: |
           curl -sLS https://get.k3sup.dev | sh
@@ -61,7 +67,12 @@ jobs:
 
       - name: Run tests
         run: |
-          go test ./tests/e2e -tags e2e -v -timeout 60m
+          go test ./tests/e2e -tags e2e -v -race -timeout 60m -coverprofile=coverage.txt
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Download logs & events
         if: always()
@@ -114,7 +125,7 @@ jobs:
     environment: e2e-robot
 
     env:
-      K3S_CHANNEL: v1.28
+      K3S_VERSION: v1.29.0+k3s1
       SCOPE: gha-${{ github.run_id }}-${{ github.run_attempt }}-robot
 
       # Disable routes in dev-env, not supported for Robot.
@@ -124,23 +135,27 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.21"
-      - uses: actions/checkout@master
+          go-version-file: go.mod
+
+      - uses: hetznercloud/setup-hcloud@v1
+
       - uses: hetznercloud/tps-action@main
         with:
           token: ${{ secrets.HCLOUD_TOKEN  }}
-      - uses: 3bit/setup-hcloud@v2
-      - uses: yokawasa/action-setup-kube-tools@v0.9.3
+
+      - uses: yokawasa/action-setup-kube-tools@v0.11.1
         with:
           setup-tools: |
             helm
             kubectl
             skaffold
-          helm: v3.11.2
-          kubectl: v1.28.1
-          skaffold: v2.3.0
+          helm: v3.15.1
+          kubectl: v1.29.0
+          skaffold: v2.12.0
       - name: Install k3sup
         run: |
           curl -sLS https://get.k3sup.dev | sh

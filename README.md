@@ -1,6 +1,7 @@
 # Kubernetes Cloud Controller Manager for Hetzner Cloud
 
 [![GitHub Actions status](https://github.com/hetznercloud/hcloud-cloud-controller-manager/workflows/Run%20tests/badge.svg)](https://github.com/hetznercloud/hcloud-cloud-controller-manager/actions)
+[![Codecov](https://codecov.io/github/hetznercloud/hcloud-cloud-controller-manager/graph/badge.svg?token=Q7pbOoyVpj)](https://codecov.io/github/hetznercloud/hcloud-cloud-controller-manager/tree/main)
 
 The Hetzner Cloud [cloud-controller-manager](https://kubernetes.io/docs/concepts/architecture/cloud-controller/) integrates your Kubernetes cluster with the Hetzner Cloud & Robot APIs.
 
@@ -57,20 +58,21 @@ guide](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/),
 which these instructions are meant to augment and the [kubeadm
 documentation](https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm/).
 
-1. The cloud controller manager adds its labels when a node is added to
+1. The cloud controller manager adds the labels when a node is added to
    the cluster. For current Kubernetes versions, this means we
-   have to add the `--cloud-provider=external` flag to the `kubelet`
-   before initializing the control plane with `kubeadm init`. To do
-   accomplish this we add this systemd drop-in unit
-   `/etc/systemd/system/kubelet.service.d/20-hcloud.conf`:
+   have to add the `--cloud-provider=external` flag to the `kubelet`. How you
+   do this depends on your Kubernetes distribution. With `kubeadm` you can
+   either set it in the kubeadm config
+   ([`nodeRegistration.kubeletExtraArgs`][kubeadm-config]) or through a systemd
+   drop-in unit `/etc/systemd/system/kubelet.service.d/20-hcloud.conf`:
 
-    ```
-    [Service]
-    Environment="KUBELET_EXTRA_ARGS=--cloud-provider=external"
-    ```
+   ```ini
+   [Service]
+   Environment="KUBELET_EXTRA_ARGS=--cloud-provider=external"
+   ```
 
    Note: the `--cloud-provider` flag is deprecated since K8S 1.19. You
-   will see a log message regarding this. For now (v1.26) it is still required.
+   will see a log message regarding this. For now (v1.29) it is still required.
 
 2. Now the control plane can be initialized:
 
@@ -122,6 +124,8 @@ documentation](https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm/
     kubectl apply -f https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm.yaml
     ```
 
+[kubeadm-config]: https://kubernetes.io/docs/reference/config-api/kubeadm-config.v1beta4/#kubeadm-k8s-io-v1beta4-NodeRegistrationOptions
+
 ## Networks support
 
 When you use the Cloud Controller Manager with networks support, the CCM is in favor of allocating the IPs (& setup the
@@ -164,21 +168,23 @@ See https://github.com/hetznercloud/hcloud-cloud-controller-manager/issues/212
 
 ## Versioning policy
 
-We aim to support the latest three versions of Kubernetes. After a new
-Kubernetes version has been released we will stop supporting the oldest
-previously supported version. This does not necessarily mean that the
-Cloud Controller Manager does not still work with this version. However,
-it means that we do not test that version anymore. Additionally, we will
+We aim to support the latest three versions of Kubernetes. When a Kubernetes
+version is marked as _End Of Life_, we will stop support for it and remove the
+version from our CI tests. This does not necessarily mean that the
+Cloud Controller Manager does not still work with this version. We will
 not fix bugs related only to an unsupported version.
+
+Current Kubernetes Releases: https://kubernetes.io/releases/
 
 ### With Networks support
 
 | Kubernetes | Cloud Controller Manager |                                                                                             Deployment File |
 |------------|-------------------------:|------------------------------------------------------------------------------------------------------------:|
-| 1.28       |                     main |  https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm-networks.yaml |
-| 1.27       |                     main |  https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm-networks.yaml |
-| 1.26       |                     main |  https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm-networks.yaml |
-| 1.25       |                     main |  https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm-networks.yaml |
+| 1.29       |                   latest |  https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm-networks.yaml |
+| 1.28       |                   latest |  https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm-networks.yaml |
+| 1.27       |                   latest |  https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm-networks.yaml |
+| 1.26       |                   latest |  https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm-networks.yaml |
+| 1.25       |                  v1.19.0 | https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/download/v1.19.0/ccm-networks.yaml |
 | 1.24       |                  v1.17.2 | https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/download/v1.17.2/ccm-networks.yaml |
 | 1.23       |                  v1.13.2 | https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/download/v1.13.2/ccm-networks.yaml |
 
@@ -186,10 +192,11 @@ not fix bugs related only to an unsupported version.
 
 | Kubernetes | Cloud Controller Manager |                                                                                    Deployment File |
 |------------|-------------------------:|---------------------------------------------------------------------------------------------------:|
-| 1.28       |                     main |  https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm.yaml |
-| 1.27       |                     main |  https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm.yaml |
-| 1.26       |                     main |  https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm.yaml |
-| 1.25       |                     main |  https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm.yaml |
+| 1.29       |                   latest |  https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm.yaml |
+| 1.28       |                   latest |  https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm.yaml |
+| 1.27       |                   latest |  https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm.yaml |
+| 1.26       |                   latest |  https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm.yaml |
+| 1.25       |                  v1.19.0 | https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/download/v1.19.0/ccm.yaml |
 | 1.24       |                  v1.17.2 | https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/download/v1.17.2/ccm.yaml |
 | 1.23       |                  v1.13.2 | https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/download/v1.13.2/ccm.yaml |
 
